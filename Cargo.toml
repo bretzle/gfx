@@ -1,0 +1,26 @@
+[package]
+name = "gfx"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+glow = "0.12.3"
+raw-window-handle = "0.5"
+bitflags = "2.3.3"
+bytemuck = "1.13.1"
+
+[target.'cfg(target_os="windows")'.dependencies]
+windows-sys = { version = "0.48", features = ["Win32_Foundation", "Win32_System_LibraryLoader", "Win32_Graphics_Gdi", "Win32_Graphics_OpenGL", "Win32_UI_WindowsAndMessaging"] }
+
+[target.'cfg(target_os="linux")'.dependencies]
+x11 = { version = "2.20.1", features = ["xlib", "glx"] }
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+wasm-bindgen = "0.2.86"
+slotmap = "1.0.6"
+web-sys = { version = "0.3.58", features = ["WebGl2RenderingContext"] }
+
+[dev-dependencies]
+winit = "0.28.6"
