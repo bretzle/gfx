@@ -7,22 +7,19 @@ use std::{
     mem::transmute,
     os::windows::prelude::OsStrExt,
 };
-use windows_sys::Win32::{
-    Foundation::HWND,
-    Graphics::{
-        Gdi::{GetDC, ReleaseDC, HDC},
-        OpenGL::{
-            wglCreateContext, wglGetProcAddress, wglMakeCurrent, ChoosePixelFormat,
-            DescribePixelFormat, SetPixelFormat, SwapBuffers, HGLRC, PFD_DOUBLEBUFFER,
-            PFD_DRAW_TO_WINDOW, PFD_MAIN_PLANE, PFD_SUPPORT_OPENGL, PFD_TYPE_RGBA,
-            PIXELFORMATDESCRIPTOR,
-        },
-    },
-    System::LibraryLoader::{GetProcAddress, LoadLibraryA},
-    UI::WindowsAndMessaging::{
-        CreateWindowExW, DefWindowProcW, DestroyWindow, RegisterClassW, UnregisterClassW, CS_OWNDC,
-        CW_USEDEFAULT, WNDCLASSW,
-    },
+use winapi::shared::minwindef::{HINSTANCE, HMODULE};
+use winapi::shared::ntdef::WCHAR;
+use winapi::shared::windef::{HDC, HGLRC, HWND};
+use winapi::um::libloaderapi::{FreeLibrary, GetProcAddress, LoadLibraryA};
+use winapi::um::wingdi::{
+    wglCreateContext, wglDeleteContext, wglGetProcAddress, wglMakeCurrent, ChoosePixelFormat,
+    DescribePixelFormat, SetPixelFormat, SwapBuffers, PFD_DOUBLEBUFFER, PFD_DRAW_TO_WINDOW,
+    PFD_MAIN_PLANE, PFD_SUPPORT_OPENGL, PFD_TYPE_RGBA, PIXELFORMATDESCRIPTOR,
+};
+use winapi::um::winnt::IMAGE_DOS_HEADER;
+use winapi::um::winuser::{
+    CreateWindowExW, DefWindowProcW, DestroyWindow, GetDC, RegisterClassW, ReleaseDC,
+    UnregisterClassW, CS_OWNDC, CW_USEDEFAULT, WNDCLASSW,
 };
 
 // See https://www.khronos.org/registry/OpenGL/extensions/ARB/WGL_ARB_create_context.txt
@@ -70,37 +67,9 @@ const WGL_FRAMEBUFFER_SRGB_CAPABLE_ARB: i32 = 0x20A9;
 
 type WglSwapIntervalEXT = extern "system" fn(i32) -> i32;
 
-#[repr(C)]
-#[allow(non_camel_case_types)]
-pub struct IMAGE_DOS_HEADER {
-    pub e_magic: u16,
-    pub e_cblp: u16,
-    pub e_cp: u16,
-    pub e_crlc: u16,
-    pub e_cparhdr: u16,
-    pub e_minalloc: u16,
-    pub e_maxalloc: u16,
-    pub e_ss: u16,
-    pub e_sp: u16,
-    pub e_csum: u16,
-    pub e_ip: u16,
-    pub e_cs: u16,
-    pub e_lfarlc: u16,
-    pub e_ovno: u16,
-    pub e_res: [u16; 4],
-    pub e_oemid: u16,
-    pub e_oeminfo: u16,
-    pub e_res2: [u16; 10],
-    pub e_lfanew: u32,
-}
-
 extern "C" {
     static __ImageBase: IMAGE_DOS_HEADER;
 }
-
-type WCHAR = u16;
-type HMODULE = isize;
-type HINSTANCE = isize;
 
 pub struct Impl {
     _hwnd: HWND,
@@ -153,13 +122,13 @@ impl Impl {
             CW_USEDEFAULT,
             CW_USEDEFAULT,
             CW_USEDEFAULT,
-            0,
-            0,
+            0 as _,
+            0 as _,
             hinstance,
             std::ptr::null_mut(),
         );
 
-        if hwnd_tmp == 0 {
+        if hwnd_tmp.is_null() {
             return Err(GlError::CreationFailed);
         }
 
@@ -181,7 +150,7 @@ impl Impl {
         SetPixelFormat(hdc_tmp, ChoosePixelFormat(hdc_tmp, &pfd_tmp), &pfd_tmp);
 
         let hglrc_tmp = wglCreateContext(hdc_tmp);
-        if hglrc_tmp == 0 {
+        if hglrc_tmp.is_null() {
             ReleaseDC(hwnd_tmp, hdc_tmp);
             UnregisterClassW(class as *const WCHAR, hinstance);
             DestroyWindow(hwnd_tmp);
@@ -194,7 +163,7 @@ impl Impl {
         let wglCreateContextAttribsARB: Option<WglCreateContextAttribsARB> = {
             let symbol = CString::new("wglCreateContextAttribsARB").unwrap();
             let addr = wglGetProcAddress(symbol.as_ptr().cast());
-            if addr.is_some() {
+            if !addr.is_null() {
                 Some(std::mem::transmute(addr))
             } else {
                 None
@@ -205,14 +174,14 @@ impl Impl {
         let wglChoosePixelFormatARB: Option<WglChoosePixelFormatARB> = {
             let symbol = CString::new("wglChoosePixelFormatARB").unwrap();
             let addr = wglGetProcAddress(symbol.as_ptr() as _);
-            if addr.is_some() {
+            if !addr.is_null() {
                 Some(std::mem::transmute(addr))
             } else {
                 None
             }
         };
 
-        wglMakeCurrent(hdc_tmp, 0);
+        wglMakeCurrent(hdc_tmp, 0 as _);
         ReleaseDC(hwnd_tmp, hdc_tmp);
         UnregisterClassW(class as *const WCHAR, hinstance);
         DestroyWindow(hwnd_tmp);
@@ -276,8 +245,8 @@ impl Impl {
             0
         ];
 
-        let hglrc = wglCreateContextAttribsARB.unwrap()(hdc, 0, ctx_attribs.as_ptr());
-        if hglrc == 0 {
+        let hglrc = wglCreateContextAttribsARB.unwrap()(hdc, 0 as _, ctx_attribs.as_ptr());
+        if hglrc.is_null() {
             return Err(GlError::CreationFailed);
         }
 
@@ -285,7 +254,7 @@ impl Impl {
         let gl_library = LoadLibraryA(gl_library_name.as_ptr().cast());
 
         wglMakeCurrent(hdc, hglrc);
-        wglMakeCurrent(hdc, 0);
+        wglMakeCurrent(hdc, 0 as _);
 
         Ok(Impl {
             _hwnd: hwnd,
@@ -301,18 +270,17 @@ impl Impl {
 
     #[allow(unused)]
     pub unsafe fn make_not_current(&self) {
-        wglMakeCurrent(self.hdc, 0);
+        wglMakeCurrent(self.hdc, 0 as _);
     }
 
     pub unsafe fn get_proc_address(&self, symbol: &str) -> *const std::ffi::c_void {
         let symbol = CString::new(symbol).unwrap();
         let addr = wglGetProcAddress(symbol.as_ptr().cast());
-        match addr {
-            Some(f) => f as _,
-            None => match GetProcAddress(self.gl_library, symbol.as_ptr().cast()) {
-                Some(f) => f as _,
-                None => 0 as _,
-            },
+        if addr.is_null() {
+            let addr = GetProcAddress(self.gl_library, symbol.as_ptr().cast());
+            addr.cast()
+        } else {
+            addr.cast()
         }
     }
 
@@ -322,8 +290,9 @@ impl Impl {
 
     pub unsafe fn set_swap_interval(&self, vsync: bool) {
         let symbol = CString::new("wglSwapIntervalEXT").unwrap();
-        if let Some(f) = wglGetProcAddress(symbol.as_ptr() as _) {
-            let f: WglSwapIntervalEXT = transmute(f);
+        let addr = wglGetProcAddress(symbol.as_ptr() as _);
+        if !addr.is_null() {
+            let f: WglSwapIntervalEXT = transmute(addr);
             f(vsync as i32);
         }
     }
