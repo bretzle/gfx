@@ -12,14 +12,12 @@ use winapi::shared::ntdef::WCHAR;
 use winapi::shared::windef::{HDC, HGLRC, HWND};
 use winapi::um::libloaderapi::{FreeLibrary, GetProcAddress, LoadLibraryA};
 use winapi::um::wingdi::{
-    wglCreateContext, wglDeleteContext, wglGetProcAddress, wglMakeCurrent, ChoosePixelFormat,
-    DescribePixelFormat, SetPixelFormat, SwapBuffers, PFD_DOUBLEBUFFER, PFD_DRAW_TO_WINDOW,
-    PFD_MAIN_PLANE, PFD_SUPPORT_OPENGL, PFD_TYPE_RGBA, PIXELFORMATDESCRIPTOR,
+    wglCreateContext, wglDeleteContext, wglGetProcAddress, wglMakeCurrent, ChoosePixelFormat, DescribePixelFormat, SetPixelFormat,
+    SwapBuffers, PFD_DOUBLEBUFFER, PFD_DRAW_TO_WINDOW, PFD_MAIN_PLANE, PFD_SUPPORT_OPENGL, PFD_TYPE_RGBA, PIXELFORMATDESCRIPTOR,
 };
 use winapi::um::winnt::IMAGE_DOS_HEADER;
 use winapi::um::winuser::{
-    CreateWindowExW, DefWindowProcW, DestroyWindow, GetDC, RegisterClassW, ReleaseDC,
-    UnregisterClassW, CS_OWNDC, CW_USEDEFAULT, WNDCLASSW,
+    CreateWindowExW, DefWindowProcW, DestroyWindow, GetDC, RegisterClassW, ReleaseDC, UnregisterClassW, CS_OWNDC, CW_USEDEFAULT, WNDCLASSW,
 };
 
 // See https://www.khronos.org/registry/OpenGL/extensions/ARB/WGL_ARB_create_context.txt
@@ -36,8 +34,7 @@ const WGL_CONTEXT_OPENGL_NO_ERROR_ARB: i32 = 0x31B3;
 
 // See https://www.khronos.org/registry/OpenGL/extensions/ARB/WGL_ARB_pixel_format.txt
 
-type WglChoosePixelFormatARB =
-    extern "system" fn(HDC, *const i32, *const f32, u32, *mut i32, *mut u32) -> i32;
+type WglChoosePixelFormatARB = extern "system" fn(HDC, *const i32, *const f32, u32, *mut i32, *mut u32) -> i32;
 
 const WGL_DRAW_TO_WINDOW_ARB: i32 = 0x2001;
 const WGL_ACCELERATION_ARB: i32 = 0x2003;
@@ -79,10 +76,7 @@ pub struct Impl {
 }
 
 impl Impl {
-    pub unsafe fn create(
-        config: GlConfig,
-        parent: &impl HasRawWindowHandle,
-    ) -> Result<Self, GlError> {
+    pub unsafe fn create(config: GlConfig, parent: &impl HasRawWindowHandle) -> Result<Self, GlError> {
         let handle = if let RawWindowHandle::Win32(handle) = parent.raw_window_handle() {
             handle
         } else {
@@ -94,9 +88,7 @@ impl Impl {
         }
 
         // Create temporary window and context to load function pointers
-        let class_name = OsStr::new("gl-context-window\0")
-            .encode_wide()
-            .collect::<Vec<_>>();
+        let class_name = OsStr::new("gl-context-window\0").encode_wide().collect::<Vec<_>>();
 
         let hinstance = &__ImageBase as *const IMAGE_DOS_HEADER as HINSTANCE;
 
@@ -223,12 +215,7 @@ impl Impl {
         );
 
         let mut pfd: PIXELFORMATDESCRIPTOR = std::mem::zeroed();
-        DescribePixelFormat(
-            hdc,
-            pixel_format,
-            std::mem::size_of::<PIXELFORMATDESCRIPTOR>() as u32,
-            &mut pfd,
-        );
+        DescribePixelFormat(hdc, pixel_format, std::mem::size_of::<PIXELFORMATDESCRIPTOR>() as u32, &mut pfd);
         SetPixelFormat(hdc, pixel_format, &pfd);
 
         let profile_mask = match config.profile {

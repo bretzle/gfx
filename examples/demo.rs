@@ -14,8 +14,7 @@ fn main() {
         .build(&ev)
         .unwrap();
 
-    let gl_context =
-        unsafe { glue::GlContext::create(glue::GlConfig::default(), &window) }.unwrap();
+    let gl_context = unsafe { glue::GlContext::create(glue::GlConfig::default(), &window) }.unwrap();
     gl_context.make_current();
     gl_context.set_swap_interval(true);
 

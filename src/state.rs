@@ -1,6 +1,4 @@
-use crate::{
-    buffer::*, cache::*, color::*, pass::*, pipeline::*, shader::*, texture::*, uniform::*, *,
-};
+use crate::{buffer::*, cache::*, color::*, pass::*, pipeline::*, shader::*, texture::*, uniform::*, *};
 use glow::HasContext;
 
 pub struct Features {
@@ -25,8 +23,7 @@ pub struct QuadContext {
 impl QuadContext {
     pub fn new(gl: glow::Context) -> Self {
         unsafe {
-            let default_framebuffer =
-                convert_framebuffer(gl.get_parameter_i32(glow::FRAMEBUFFER_BINDING));
+            let default_framebuffer = convert_framebuffer(gl.get_parameter_i32(glow::FRAMEBUFFER_BINDING));
             let vao = gl.create_vertex_array().ok();
             gl.bind_vertex_array(vao);
 
@@ -64,11 +61,7 @@ impl QuadContext {
         }
     }
 
-    unsafe fn set_blend(
-        &mut self,
-        color_blend: Option<BlendState>,
-        alpha_blend: Option<BlendState>,
-    ) {
+    unsafe fn set_blend(&mut self, color_blend: Option<BlendState>, alpha_blend: Option<BlendState>) {
         if color_blend.is_none() && alpha_blend.is_some() {
             panic!("AlphaBlend without ColorBlend");
         }
@@ -93,12 +86,8 @@ impl QuadContext {
                 dfactor: dst_alpha,
             }) = alpha_blend
             {
-                self.gl.blend_func_separate(
-                    src_rgb.into(),
-                    dst_rgb.into(),
-                    src_alpha.into(),
-                    dst_alpha.into(),
-                );
+                self.gl
+                    .blend_func_separate(src_rgb.into(), dst_rgb.into(), src_alpha.into(), dst_alpha.into());
                 self.gl.blend_equation_separate(eq_rgb as _, eq_alpha as _);
             } else {
                 self.gl.blend_func(src_rgb.into(), dst_rgb.into());
@@ -123,33 +112,17 @@ impl QuadContext {
             }
 
             let front = &stencil.front;
-            self.gl.stencil_op_separate(
-                glow::FRONT,
-                front.fail_op as _,
-                front.depth_fail_op as _,
-                front.pass_op as _,
-            );
-            self.gl.stencil_func_separate(
-                glow::FRONT,
-                front.test_func as _,
-                front.test_ref,
-                front.test_mask,
-            );
+            self.gl
+                .stencil_op_separate(glow::FRONT, front.fail_op as _, front.depth_fail_op as _, front.pass_op as _);
+            self.gl
+                .stencil_func_separate(glow::FRONT, front.test_func as _, front.test_ref, front.test_mask);
             self.gl.stencil_mask_separate(glow::FRONT, front.write_mask);
 
             let back = &stencil.back;
-            self.gl.stencil_op_separate(
-                glow::BACK,
-                back.fail_op as _,
-                back.depth_fail_op as _,
-                back.pass_op as _,
-            );
-            self.gl.stencil_func_separate(
-                glow::BACK,
-                back.test_func as _,
-                back.test_ref,
-                back.test_mask,
-            );
+            self.gl
+                .stencil_op_separate(glow::BACK, back.fail_op as _, back.depth_fail_op as _, back.pass_op as _);
+            self.gl
+                .stencil_func_separate(glow::BACK, back.test_func as _, back.test_ref, back.test_mask);
             self.gl.stencil_mask_separate(glow::BACK, back.write_mask);
         } else if self.cache.stencil.is_some() {
             self.gl.disable(glow::STENCIL_TEST);
@@ -193,32 +166,19 @@ impl QuadContext {
         self.height = height;
     }
 
-    pub fn new_shader(
-        &mut self,
-        shader: ShaderSource,
-        meta: ShaderMeta,
-    ) -> Result<ShaderId, ShaderError> {
+    pub fn new_shader(&mut self, shader: ShaderSource, meta: ShaderMeta) -> Result<ShaderId, ShaderError> {
         let shader = ShaderInternal::new(&self.gl, shader, meta)?;
         self.shaders.push(shader);
         Ok(ShaderId(self.shaders.len() - 1))
     }
 
-    pub fn new_texture(
-        &mut self,
-        access: TextureAccess,
-        bytes: Option<&[u8]>,
-        params: TextureParams,
-    ) -> TextureId {
+    pub fn new_texture(&mut self, access: TextureAccess, bytes: Option<&[u8]>, params: TextureParams) -> TextureId {
         let texture = Texture::new(self, access, bytes, params);
         self.textures.push(texture);
         TextureId(self.textures.len() - 1)
     }
 
-    fn new_texture_from_data_and_format(
-        &mut self,
-        bytes: &[u8],
-        params: TextureParams,
-    ) -> TextureId {
+    fn new_texture_from_data_and_format(&mut self, bytes: &[u8], params: TextureParams) -> TextureId {
         self.new_texture(TextureAccess::Static, Some(bytes), params)
     }
 
@@ -242,13 +202,7 @@ impl QuadContext {
         t.set_wrap(self, wrap);
     }
 
-    pub fn texture_resize(
-        &mut self,
-        texture: TextureId,
-        width: u32,
-        height: u32,
-        bytes: Option<&[u8]>,
-    ) {
+    pub fn texture_resize(&mut self, texture: TextureId, width: u32, height: u32, bytes: Option<&[u8]>) {
         let mut t = self.textures[texture.0];
         t.resize(self, width, height, bytes);
     }
@@ -265,15 +219,7 @@ impl QuadContext {
         self.texture_update_part(texture, 0 as _, 0 as _, width as _, height as _, bytes)
     }
 
-    pub fn texture_update_part(
-        &mut self,
-        texture: TextureId,
-        x_offset: i32,
-        y_offset: i32,
-        width: i32,
-        height: i32,
-        bytes: &[u8],
-    ) {
+    pub fn texture_update_part(&mut self, texture: TextureId, x_offset: i32, y_offset: i32, width: i32, height: i32, bytes: &[u8]) {
         let t = self.textures[texture.0];
         t.update_texture_part(self, x_offset, y_offset, width, height, bytes);
     }
@@ -298,18 +244,8 @@ impl QuadContext {
         texture.params
     }
 
-    pub fn new_render_pass(
-        &mut self,
-        color_img: TextureId,
-        depth_img: Option<TextureId>,
-    ) -> RenderPass {
-        let pass = RenderPassInternal::new(
-            &self.gl,
-            &self.textures,
-            self.default_framebuffer,
-            color_img,
-            depth_img,
-        );
+    pub fn new_render_pass(&mut self, color_img: TextureId, depth_img: Option<TextureId>) -> RenderPass {
+        let pass = RenderPassInternal::new(&self.gl, &self.textures, self.default_framebuffer, color_img, depth_img);
         self.passes.push(pass);
         RenderPass(self.passes.len() - 1)
     }
@@ -319,10 +255,7 @@ impl QuadContext {
     }
 
     pub fn delete_render_pass(&mut self, pass: RenderPass) {
-        unsafe {
-            self.gl
-                .delete_framebuffer(self.passes[pass.0].gl_fb.take().unwrap())
-        }
+        unsafe { self.gl.delete_framebuffer(self.passes[pass.0].gl_fb.take().unwrap()) }
 
         self.delete_texture(self.passes[pass.0].texture);
         if let Some(depth_texture) = self.passes[pass.0].depth_texture {
@@ -330,12 +263,7 @@ impl QuadContext {
         }
     }
 
-    pub fn new_pipeline(
-        &mut self,
-        buffer_layout: &[BufferLayout],
-        attributes: &[VertexAttribute],
-        shader: ShaderId,
-    ) -> Pipeline {
+    pub fn new_pipeline(&mut self, buffer_layout: &[BufferLayout], attributes: &[VertexAttribute], shader: ShaderId) -> Pipeline {
         self.new_pipeline_with_params(buffer_layout, attributes, shader, Default::default())
     }
 
@@ -346,14 +274,7 @@ impl QuadContext {
         shader: ShaderId,
         params: PipelineParams,
     ) -> Pipeline {
-        let pipeline = PipelineInternal::new(
-            &self.gl,
-            buffer_layout,
-            attributes,
-            shader,
-            self.shaders[shader.0].program,
-            params,
-        );
+        let pipeline = PipelineInternal::new(&self.gl, buffer_layout, attributes, shader, self.shaders[shader.0].program, params);
         self.pipelines.push(pipeline);
         Pipeline(self.pipelines.len() - 1)
     }
@@ -391,12 +312,7 @@ impl QuadContext {
         }
     }
 
-    pub fn new_buffer(
-        &mut self,
-        type_: BufferType,
-        usage: BufferUsage,
-        data: BufferSource,
-    ) -> BufferId {
+    pub fn new_buffer(&mut self, type_: BufferType, usage: BufferUsage, data: BufferSource) -> BufferId {
         let gl_target = type_ as u32;
         let gl_usage = usage as u32;
         let (size, element_size) = match &data {
@@ -404,11 +320,7 @@ impl QuadContext {
             BufferSource::Empty { size, element_size } => (*size, *element_size),
         };
         let index_type = match type_ {
-            BufferType::IndexBuffer
-                if element_size == 1 || element_size == 2 || element_size == 4 =>
-            {
-                Some(element_size as u32)
-            }
+            BufferType::IndexBuffer if element_size == 1 || element_size == 2 || element_size == 4 => Some(element_size as u32),
             BufferType::IndexBuffer => panic!("unsupported index buffer dimension"),
             BufferType::VertexBuffer => None,
         };
@@ -417,14 +329,12 @@ impl QuadContext {
         unsafe {
             gl_buf = self.gl.create_buffer().ok();
             self.cache.store_buffer_binding(gl_target);
-            self.cache
-                .bind_buffer(&self.gl, gl_target, gl_buf, index_type);
+            self.cache.bind_buffer(&self.gl, gl_target, gl_buf, index_type);
 
             self.gl.buffer_data_size(gl_target, size as _, gl_usage);
             if let BufferSource::Slice(data) = data {
                 debug_assert!(data.is_slice);
-                self.gl
-                    .buffer_sub_data_u8_slice(gl_target, 0, data.as_slice());
+                self.gl.buffer_sub_data_u8_slice(gl_target, 0, data.as_slice());
             }
             self.cache.restore_buffer_binding(&self.gl, gl_target);
         }
@@ -458,12 +368,8 @@ impl QuadContext {
 
         let gl_target = buffer.buffer_type as u32;
         self.cache.store_buffer_binding(gl_target);
-        self.cache
-            .bind_buffer(&self.gl, gl_target, buffer.gl_buf, buffer.index_type);
-        unsafe {
-            self.gl
-                .buffer_sub_data_u8_slice(gl_target, 0, data.as_slice())
-        };
+        self.cache.bind_buffer(&self.gl, gl_target, buffer.gl_buf, buffer.index_type);
+        unsafe { self.gl.buffer_sub_data_u8_slice(gl_target, 0, data.as_slice()) };
         self.cache.restore_buffer_binding(&self.gl, gl_target);
     }
 
@@ -477,10 +383,7 @@ impl QuadContext {
     /// There is no protection against using deleted textures later. However its not an UB in OpenGl and thats why
     /// this function is not marked as unsafe
     pub fn delete_buffer(&mut self, buffer: BufferId) {
-        unsafe {
-            self.gl
-                .delete_buffer(self.buffers[buffer.0].gl_buf.take().unwrap())
-        }
+        unsafe { self.gl.delete_buffer(self.buffers[buffer.0].gl_buf.take().unwrap()) }
         self.cache.clear_buffer_bindings(&self.gl);
         self.cache.clear_vertex_attributes();
     }
@@ -508,10 +411,8 @@ impl QuadContext {
                 .unwrap_or_else(|| panic!("Image count in bindings and shader did not match!"));
             if shader_image.gl_loc.is_some() {
                 unsafe {
-                    self.cache
-                        .bind_texture(&self.gl, n, self.textures[bindings_image.0].raw);
-                    self.gl
-                        .uniform_1_i32(shader_image.gl_loc.as_ref(), n as i32);
+                    self.cache.bind_texture(&self.gl, n, self.textures[bindings_image.0].raw);
+                    self.gl.uniform_1_i32(shader_image.gl_loc.as_ref(), n as i32);
                 }
             }
         }
@@ -530,8 +431,7 @@ impl QuadContext {
                 if cached_attr.map_or(true, |cached_attr| {
                     attribute != cached_attr.attribute || cached_attr.gl_vbuf != vb.gl_buf
                 }) {
-                    self.cache
-                        .bind_buffer(&self.gl, glow::ARRAY_BUFFER, vb.gl_buf, vb.index_type);
+                    self.cache.bind_buffer(&self.gl, glow::ARRAY_BUFFER, vb.gl_buf, vb.index_type);
 
                     unsafe {
                         self.gl.vertex_attrib_pointer_f32(
@@ -543,8 +443,7 @@ impl QuadContext {
                             attribute.offset as i32,
                         );
                         if self.features.instancing {
-                            self.gl
-                                .vertex_attrib_divisor(attr_index as u32, attribute.divisor as u32);
+                            self.gl.vertex_attrib_divisor(attr_index as u32, attribute.divisor as u32);
                         }
                         self.gl.enable_vertex_attrib_array(attr_index as u32);
                     };
@@ -608,12 +507,8 @@ impl QuadContext {
         unsafe {
             if let Some(c) = color {
                 bits |= glow::COLOR_BUFFER_BIT;
-                self.gl.clear_color(
-                    c.r as f32 / 255.0,
-                    c.g as f32 / 255.0,
-                    c.b as f32 / 255.0,
-                    c.a as f32 / 255.0,
-                )
+                self.gl
+                    .clear_color(c.r as f32 / 255.0, c.g as f32 / 255.0, c.b as f32 / 255.0, c.a as f32 / 255.0)
             }
 
             if let Some(v) = depth {
@@ -635,18 +530,13 @@ impl QuadContext {
     /// start rendering to the default frame buffer
     pub fn begin_default_pass(&mut self, action: PassAction) {
         unsafe {
-            self.gl
-                .bind_framebuffer(glow::FRAMEBUFFER, self.default_framebuffer);
+            self.gl.bind_framebuffer(glow::FRAMEBUFFER, self.default_framebuffer);
             self.gl.viewport(0, 0, self.width, self.height);
             self.gl.scissor(0, 0, self.width, self.height);
         }
         match action {
             PassAction::Nothing => {}
-            PassAction::Clear {
-                color,
-                depth,
-                stencil,
-            } => {
+            PassAction::Clear { color, depth, stencil } => {
                 self.clear(color, depth, stencil);
             }
         }
@@ -668,11 +558,7 @@ impl QuadContext {
         }
         match action {
             PassAction::Nothing => {}
-            PassAction::Clear {
-                color,
-                depth,
-                stencil,
-            } => {
+            PassAction::Clear { color, depth, stencil } => {
                 self.clear(color, depth, stencil);
             }
         }
@@ -680,12 +566,9 @@ impl QuadContext {
 
     pub fn end_render_pass(&mut self) {
         unsafe {
-            self.gl
-                .bind_framebuffer(glow::FRAMEBUFFER, self.default_framebuffer);
-            self.cache
-                .bind_buffer(&self.gl, glow::ARRAY_BUFFER, None, None);
-            self.cache
-                .bind_buffer(&self.gl, glow::ELEMENT_ARRAY_BUFFER, None, None);
+            self.gl.bind_framebuffer(glow::FRAMEBUFFER, self.default_framebuffer);
+            self.cache.bind_buffer(&self.gl, glow::ARRAY_BUFFER, None, None);
+            self.cache.bind_buffer(&self.gl, glow::ELEMENT_ARRAY_BUFFER, None, None);
         }
     }
 
@@ -695,10 +578,7 @@ impl QuadContext {
     }
 
     pub fn draw(&self, first: i32, count: i32, instance_count: i32) {
-        assert!(
-            self.cache.cur_pipeline.is_some(),
-            "Drawing without any binded pipeline"
-        );
+        assert!(self.cache.cur_pipeline.is_some(), "Drawing without any binded pipeline");
 
         if !self.features.instancing && instance_count != 1 {
             eprintln!("Instanced rendering is not supported by the GPU");
@@ -706,9 +586,6 @@ impl QuadContext {
             return;
         }
 
-        unsafe {
-            self.gl
-                .draw_arrays_instanced(glow::TRIANGLES, first, count, instance_count)
-        }
+        unsafe { self.gl.draw_arrays_instanced(glow::TRIANGLES, first, count, instance_count) }
     }
 }

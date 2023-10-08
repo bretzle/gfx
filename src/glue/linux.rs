@@ -1,7 +1,5 @@
 use super::{GlConfig, GlError, Profile};
-use raw_window_handle::{
-    HasRawDisplayHandle, HasRawWindowHandle, RawDisplayHandle, RawWindowHandle,
-};
+use raw_window_handle::{HasRawDisplayHandle, HasRawWindowHandle, RawDisplayHandle, RawWindowHandle};
 use std::ffi::{c_void, CString};
 use std::os::raw::{c_int, c_ulong};
 use winit::window::Window;
@@ -20,8 +18,7 @@ type GlXCreateContextAttribsARB = unsafe extern "C" fn(
 
 // See https://www.khronos.org/registry/OpenGL/extensions/EXT/EXT_swap_control.txt
 
-type GlXSwapIntervalEXT =
-    unsafe extern "C" fn(dpy: *mut xlib::Display, drawable: glx::GLXDrawable, interval: i32);
+type GlXSwapIntervalEXT = unsafe extern "C" fn(dpy: *mut xlib::Display, drawable: glx::GLXDrawable, interval: i32);
 
 // See https://www.khronos.org/registry/OpenGL/extensions/ARB/ARB_framebuffer_sRGB.txt
 
@@ -86,8 +83,7 @@ impl Impl {
         ];
 
         let mut n_configs = 0;
-        let fb_config =
-            glx::glXChooseFBConfig(display, screen, fb_attribs.as_ptr(), &mut n_configs);
+        let fb_config = glx::glXChooseFBConfig(display, screen, fb_attribs.as_ptr(), &mut n_configs);
 
         if n_configs <= 0 {
             return Err(GlError::CreationFailed);
@@ -116,13 +112,7 @@ impl Impl {
             0,
         ];
 
-        let context = glXCreateContextAttribsARB(
-            display,
-            *fb_config,
-            std::ptr::null_mut(),
-            1,
-            ctx_attribs.as_ptr(),
-        );
+        let context = glXCreateContextAttribsARB(display, *fb_config, std::ptr::null_mut(), 1, ctx_attribs.as_ptr());
 
         if context.is_null() {
             return Err(GlError::CreationFailed);

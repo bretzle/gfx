@@ -61,10 +61,7 @@ impl UniformDesc {
     }
 
     pub fn array(self, array_count: usize) -> UniformDesc {
-        UniformDesc {
-            array_count,
-            ..self
-        }
+        UniformDesc { array_count, ..self }
     }
 }
 

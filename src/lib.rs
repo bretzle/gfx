@@ -39,7 +39,7 @@ pub struct Bindings {
     pub images: Vec<TextureId>,
 }
 
-pub fn convert_framebuffer(data: i32) -> Option<glow::Framebuffer> {
+pub(crate) fn convert_framebuffer(data: i32) -> Option<glow::Framebuffer> {
     #[cfg(not(target_arch = "wasm32"))]
     unsafe {
         transmute(data)

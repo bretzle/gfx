@@ -14,14 +14,9 @@ impl Impl {
     pub unsafe fn create(config: GlConfig, window: &Window) -> Result<Self, GlError> {
         let canvas = window.canvas().unwrap();
 
-        let gl2_ctx = canvas
-            .get_context("webgl2")
-            .expect("Failed to query about WebGL2 context");
+        let gl2_ctx = canvas.get_context("webgl2").expect("Failed to query about WebGL2 context");
 
-        let gl2_ctx = gl2_ctx
-            .unwrap()
-            .dyn_into::<WebGl2RenderingContext>()
-            .unwrap();
+        let gl2_ctx = gl2_ctx.unwrap().dyn_into::<WebGl2RenderingContext>().unwrap();
 
         Ok(Self { canvas, gl2_ctx })
     }

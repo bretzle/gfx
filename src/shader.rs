@@ -1,6 +1,6 @@
 use glow::HasContext;
 
-use crate::uniform::{UniformType, UniformBlockLayout};
+use crate::uniform::{UniformBlockLayout, UniformType};
 use std::{error::Error, fmt::Display};
 
 #[derive(Clone, Debug, Copy, PartialEq)]
@@ -20,11 +20,7 @@ pub(crate) struct ShaderInternal {
 }
 
 impl ShaderInternal {
-    pub fn new(
-        gl: &glow::Context,
-        shader: ShaderSource<'_>,
-        meta: ShaderMeta,
-    ) -> Result<ShaderInternal, ShaderError> {
+    pub fn new(gl: &glow::Context, shader: ShaderSource<'_>, meta: ShaderMeta) -> Result<ShaderInternal, ShaderError> {
         unsafe {
             let vertex_shader = compile_shader(gl, glow::VERTEX_SHADER, shader.vertex)?;
             let fragment_shader = compile_shader(gl, glow::FRAGMENT_SHADER, shader.fragment)?;
@@ -57,11 +53,7 @@ impl ShaderInternal {
                 Some(res)
             }).collect();
 
-            Ok(ShaderInternal {
-                program,
-                images,
-                uniforms,
-            })
+            Ok(ShaderInternal { program, images, uniforms })
         }
     }
 }
@@ -70,11 +62,7 @@ pub(crate) struct ShaderImage {
     pub gl_loc: Option<glow::UniformLocation>,
 }
 
-fn compile_shader(
-    gl: &glow::Context,
-    shader_type: u32,
-    source: &str,
-) -> Result<glow::Shader, ShaderError> {
+fn compile_shader(gl: &glow::Context, shader_type: u32, source: &str) -> Result<glow::Shader, ShaderError> {
     unsafe {
         let shader = gl.create_shader(shader_type).unwrap();
 
@@ -111,10 +99,7 @@ pub enum ShaderType {
 
 #[derive(Clone, Debug)]
 pub enum ShaderError {
-    CompilationError {
-        shader_type: ShaderType,
-        error_message: String,
-    },
+    CompilationError { shader_type: ShaderType, error_message: String },
     LinkError(String),
 }
 

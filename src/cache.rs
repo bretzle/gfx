@@ -1,8 +1,10 @@
-use glow::HasContext;
 use crate::MAX_SHADERSTAGE_IMAGES;
 use crate::MAX_VERTEX_ATTRIBUTES;
-use crate::{pipeline::{Pipeline, BlendState, StencilState, CullFace}, ColorMask};
-
+use crate::{
+    pipeline::{BlendState, CullFace, Pipeline, StencilState},
+    ColorMask,
+};
+use glow::HasContext;
 
 #[derive(Clone, Copy, Debug, PartialEq, Default)]
 pub struct VertexAttributeInternal {
@@ -40,13 +42,7 @@ pub struct GlCache {
 }
 
 impl GlCache {
-    pub fn bind_buffer(
-        &mut self,
-        gl: &glow::Context,
-        target: u32,
-        buffer: Option<glow::Buffer>,
-        index_type: Option<u32>,
-    ) {
+    pub fn bind_buffer(&mut self, gl: &glow::Context, target: u32, buffer: Option<glow::Buffer>, index_type: Option<u32>) {
         if target == glow::ARRAY_BUFFER {
             if self.vertex_buffer != buffer {
                 self.vertex_buffer = buffer;
@@ -82,12 +78,7 @@ impl GlCache {
         }
     }
 
-    pub fn bind_texture(
-        &mut self,
-        gl: &glow::Context,
-        slot_index: usize,
-        texture: Option<glow::Texture>,
-    ) {
+    pub fn bind_texture(&mut self, gl: &glow::Context, slot_index: usize, texture: Option<glow::Texture>) {
         unsafe {
             gl.active_texture(glow::TEXTURE0 + slot_index as u32);
             if self.textures[slot_index] != texture {

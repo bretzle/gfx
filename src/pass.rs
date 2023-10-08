@@ -1,4 +1,7 @@
-use crate::{color::Color, texture::{TextureId, Texture}};
+use crate::{
+    color::Color,
+    texture::{Texture, TextureId},
+};
 use glow::HasContext;
 
 #[derive(Clone, Copy)]

@@ -10,17 +10,9 @@ pub(crate) struct Texture {
 }
 
 impl Texture {
-    pub fn new(
-        ctx: &mut QuadContext,
-        _access: TextureAccess,
-        bytes: Option<&[u8]>,
-        params: TextureParams,
-    ) -> Texture {
+    pub fn new(ctx: &mut QuadContext, _access: TextureAccess, bytes: Option<&[u8]>, params: TextureParams) -> Texture {
         if let Some(bytes_data) = bytes {
-            assert_eq!(
-                params.format.size(params.width, params.height) as usize,
-                bytes_data.len()
-            );
+            assert_eq!(params.format.size(params.width, params.height) as usize, bytes_data.len());
         }
 
         let (internal_format, format, pixel_type) = params.format.into();
@@ -36,17 +28,10 @@ impl Texture {
 
             if cfg!(not(target_arch = "wasm32")) {
                 if params.format == TextureFormat::Alpha {
-                    ctx.gl.tex_parameter_i32(
-                        glow::TEXTURE_2D,
-                        glow::TEXTURE_SWIZZLE_A,
-                        glow::RED as _,
-                    );
+                    ctx.gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_SWIZZLE_A, glow::RED as _);
                 } else {
-                    ctx.gl.tex_parameter_i32(
-                        glow::TEXTURE_2D,
-                        glow::TEXTURE_SWIZZLE_A,
-                        glow::ALPHA as _,
-                    );
+                    ctx.gl
+                        .tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_SWIZZLE_A, glow::ALPHA as _);
                 }
             }
 
@@ -73,21 +58,14 @@ impl Texture {
                 FilterMode::Linear => glow::LINEAR,
             };
 
-            ctx.gl
-                .tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_WRAP_S, wrap as i32);
-            ctx.gl
-                .tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_WRAP_T, wrap as i32);
-            ctx.gl
-                .tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_MIN_FILTER, filter as i32);
-            ctx.gl
-                .tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_MAG_FILTER, filter as i32);
+            ctx.gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_WRAP_S, wrap as i32);
+            ctx.gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_WRAP_T, wrap as i32);
+            ctx.gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_MIN_FILTER, filter as i32);
+            ctx.gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_MAG_FILTER, filter as i32);
         }
         ctx.cache.restore_texture_binding(&ctx.gl, 0);
 
-        Texture {
-            raw: texture,
-            params,
-        }
+        Texture { raw: texture, params }
     }
 
     pub fn set_filter(&self, ctx: &mut QuadContext, filter: FilterMode) {
@@ -99,10 +77,8 @@ impl Texture {
             FilterMode::Linear => glow::LINEAR,
         };
         unsafe {
-            ctx.gl
-                .tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_MIN_FILTER, filter as i32);
-            ctx.gl
-                .tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_MAG_FILTER, filter as i32);
+            ctx.gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_MIN_FILTER, filter as i32);
+            ctx.gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_MAG_FILTER, filter as i32);
         }
         ctx.cache.restore_texture_binding(&ctx.gl, 0);
     }
@@ -117,10 +93,8 @@ impl Texture {
         };
 
         unsafe {
-            ctx.gl
-                .tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_WRAP_S, wrap as i32);
-            ctx.gl
-                .tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_WRAP_T, wrap as i32);
+            ctx.gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_WRAP_S, wrap as i32);
+            ctx.gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_WRAP_T, wrap as i32);
         }
         ctx.cache.restore_texture_binding(&ctx.gl, 0);
     }
@@ -151,15 +125,7 @@ impl Texture {
         ctx.cache.restore_texture_binding(&ctx.gl, 0);
     }
 
-    pub fn update_texture_part(
-        &self,
-        ctx: &mut QuadContext,
-        x_offset: i32,
-        y_offset: i32,
-        width: i32,
-        height: i32,
-        bytes: &[u8],
-    ) {
+    pub fn update_texture_part(&self, ctx: &mut QuadContext, x_offset: i32, y_offset: i32, width: i32, height: i32, bytes: &[u8]) {
         assert_eq!(self.size(width as _, height as _), bytes.len());
         assert!(x_offset + width <= self.params.width as _);
         assert!(y_offset + height <= self.params.height as _);
@@ -174,17 +140,10 @@ impl Texture {
 
             if cfg!(not(target_arch = "wasm32")) {
                 if self.params.format == TextureFormat::Alpha {
-                    ctx.gl.tex_parameter_i32(
-                        glow::TEXTURE_2D,
-                        glow::TEXTURE_SWIZZLE_A,
-                        glow::RED as _,
-                    );
+                    ctx.gl.tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_SWIZZLE_A, glow::RED as _);
                 } else {
-                    ctx.gl.tex_parameter_i32(
-                        glow::TEXTURE_2D,
-                        glow::TEXTURE_SWIZZLE_A,
-                        glow::ALPHA as _,
-                    );
+                    ctx.gl
+                        .tex_parameter_i32(glow::TEXTURE_2D, glow::TEXTURE_SWIZZLE_A, glow::ALPHA as _);
                 }
             }
 
@@ -208,18 +167,12 @@ impl Texture {
     pub fn read_pixels(&self, ctx: &QuadContext, bytes: &mut [u8]) {
         let (_, format, pixel_type) = self.params.format.into();
         unsafe {
-            let binded_fbo =
-                convert_framebuffer(ctx.gl.get_parameter_i32(glow::DRAW_FRAMEBUFFER_BINDING));
+            let binded_fbo = convert_framebuffer(ctx.gl.get_parameter_i32(glow::DRAW_FRAMEBUFFER_BINDING));
 
             let fbo = ctx.gl.create_framebuffer().ok();
             ctx.gl.bind_framebuffer(glow::FRAMEBUFFER, fbo);
-            ctx.gl.framebuffer_texture_2d(
-                glow::FRAMEBUFFER,
-                glow::COLOR_ATTACHMENT0,
-                glow::TEXTURE_2D,
-                self.raw,
-                0,
-            );
+            ctx.gl
+                .framebuffer_texture_2d(glow::FRAMEBUFFER, glow::COLOR_ATTACHMENT0, glow::TEXTURE_2D, self.raw, 0);
 
             ctx.gl.read_pixels(
                 0,
@@ -271,11 +224,7 @@ impl From<TextureFormat> for (u32, u32, u32) {
         match format {
             TextureFormat::RGB8 => (glow::RGB, glow::RGB, glow::UNSIGNED_BYTE),
             TextureFormat::RGBA8 => (glow::RGBA, glow::RGBA, glow::UNSIGNED_BYTE),
-            TextureFormat::Depth => (
-                glow::DEPTH_COMPONENT,
-                glow::DEPTH_COMPONENT,
-                glow::UNSIGNED_SHORT,
-            ),
+            TextureFormat::Depth => (glow::DEPTH_COMPONENT, glow::DEPTH_COMPONENT, glow::UNSIGNED_SHORT),
             #[cfg(target_arch = "wasm32")]
             TextureFormat::Alpha => (glow::ALPHA, glow::ALPHA, glow::UNSIGNED_BYTE),
             #[cfg(not(target_arch = "wasm32"))]

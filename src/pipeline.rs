@@ -1,7 +1,11 @@
 use glow::HasContext;
 
-use crate::{shader::ShaderId, cache::VertexAttributeInternal, buffer::{BufferLayout, VertexStep}, ColorMask};
-
+use crate::{
+    buffer::{BufferLayout, VertexStep},
+    cache::VertexAttributeInternal,
+    shader::ShaderId,
+    ColorMask,
+};
 
 pub(crate) struct PipelineInternal {
     pub layout: Vec<Option<VertexAttributeInternal>>,
@@ -25,12 +29,7 @@ impl PipelineInternal {
 
         let mut buffer_cache = vec![BufferCacheData::default(); buffer_layout.len()];
 
-        for VertexAttribute {
-            format,
-            buffer_index,
-            ..
-        } in attributes
-        {
+        for VertexAttribute { format, buffer_index, .. } in attributes {
             let layout = &buffer_layout[*buffer_index];
             let cache = &mut buffer_cache[*buffer_index];
 
@@ -192,11 +191,7 @@ impl VertexAttribute {
         Self::with_buffer(name, format, 0)
     }
 
-    pub const fn with_buffer(
-        name: &'static str,
-        format: VertexFormat,
-        buffer_index: usize,
-    ) -> VertexAttribute {
+    pub const fn with_buffer(name: &'static str, format: VertexFormat, buffer_index: usize) -> VertexAttribute {
         VertexAttribute {
             name,
             format,
